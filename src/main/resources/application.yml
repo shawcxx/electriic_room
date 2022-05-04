@@ -1,0 +1,63 @@
+server:
+  servlet:
+    context-path: /api
+    encoding:
+      charset: utf-8
+      force: true
+      enabled: true
+
+logging:
+  file:
+    path: log
+
+spring:
+  profiles:
+    active: test
+  application:
+    name: electric_room_server
+  output:
+    ansi:
+      enabled: always
+  main:
+    allow-bean-definition-overriding: true
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    type: com.zaxxer.hikari.HikariDataSource
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 15
+      idle-timeout: 180000
+      pool-name: HikariCP
+      max-lifetime: 1800000
+      connection-timeout: 30000
+  redis:
+    timeout: 10000ms
+    lettuce:
+      pool:
+        max-active: 200
+        max-wait: -1ms
+        max-idle: 10
+        min-idle: 1
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+mybatis-plus:
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+sa-token:
+  token-name: token
+  timeout: 2592000
+  activity-timeout: -1
+  is-concurrent: true
+  is-share: false
+  token-style:
+  is-read-cookie: false
+  is-read-body: false
