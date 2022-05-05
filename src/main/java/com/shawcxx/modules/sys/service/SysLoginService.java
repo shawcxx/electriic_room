@@ -57,7 +57,7 @@ public class SysLoginService {
             dto.setMenuList(menuList);
             dto.setPermList(permList);
             List<SysRoleDO> roles = sysUserService.getBaseMapper().queryRoles(userId);
-            dto.setRoleList(roles.stream().map(SysRoleDO::getRoleName).collect(Collectors.toList()));
+            dto.setRoleList(roles.stream().map(SysRoleDO::getRoleCode).collect(Collectors.toList()));
 
             SysUserBO sysUserBO = new SysUserBO();
             sysUserBO.setUserId(sysUser.getUserId());

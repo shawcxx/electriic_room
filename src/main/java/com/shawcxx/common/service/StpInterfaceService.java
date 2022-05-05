@@ -92,9 +92,9 @@ public class StpInterfaceService implements StpInterface {
         if (null == roleList || 0 == roleList.size()) {
             if (userId == SysConstant.SUPER_ADMIN) {
                 List<SysRoleDO> sysRoleList = sysRoleService.list(null);
-                roleList = sysRoleList.stream().map(SysRoleDO::getRoleName).collect(Collectors.toList());
+                roleList = sysRoleList.stream().map(SysRoleDO::getRoleCode).collect(Collectors.toList());
             } else {
-                roleList = sysUserService.getBaseMapper().queryRoles(userId).stream().map(SysRoleDO::getRoleName).collect(Collectors.toList());
+                roleList = sysUserService.getBaseMapper().queryRoles(userId).stream().map(SysRoleDO::getRoleCode).collect(Collectors.toList());
             }
         }
         redisService.putValue(key, JSONObject.toJSONString(roleList), 10, TimeUnit.MINUTES);

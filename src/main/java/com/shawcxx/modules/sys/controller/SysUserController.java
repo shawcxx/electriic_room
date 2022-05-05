@@ -26,7 +26,6 @@ public class SysUserController {
     private SysUserService sysUserService;
 
     @PostMapping("info")
-    @SaCheckLogin
     @SaCheckRole("admin")
     public MyResult info(@RequestParam Long id) {
         SysUserDTO sysUserDTO = sysUserService.info(id);
@@ -34,7 +33,6 @@ public class SysUserController {
     }
 
     @PostMapping("saveOrUpdate")
-    @SaCheckLogin
     @SaCheckRole("admin")
     public MyResult saveOrUpdate(@RequestBody @Validated SysUserForm form) {
         sysUserService.saveOrUpdate(form);
@@ -43,7 +41,6 @@ public class SysUserController {
 
 
     @PostMapping("query")
-    @SaCheckLogin
     @SaCheckRole("admin")
     public MyResult query(@RequestBody SysUserQueryForm form) {
         Page<SysUserDTO> page = sysUserService.query(form);

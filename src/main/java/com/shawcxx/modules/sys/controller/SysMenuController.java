@@ -25,7 +25,6 @@ public class SysMenuController {
 
 
     @PostMapping("list")
-    @SaCheckLogin
     @SaCheckRole("admin")
     public MyResult list() {
         List<SysMenuDTO> list = sysMenuService.sysMenuList(true);
@@ -33,7 +32,6 @@ public class SysMenuController {
     }
 
     @PostMapping("getMenuSelectTree")
-    @SaCheckLogin
     @SaCheckRole("admin")
     public MyResult getMenuSelectTree() {
 
@@ -44,7 +42,6 @@ public class SysMenuController {
 
     @SysLog("删除菜单")
     @PostMapping("del")
-    @SaCheckLogin
     @SaCheckRole("admin")
     public MyResult deleteById(@RequestParam Long id) {
         sysMenuService.delete(id);
@@ -53,7 +50,6 @@ public class SysMenuController {
 
     @SysLog("编辑菜单")
     @PostMapping("saveOrUpdate")
-    @SaCheckLogin
     @SaCheckRole("admin")
     public MyResult addOrUpdate(@RequestBody @Validated SysMenuForm form) {
         return sysMenuService.saveOrUpdate(form);

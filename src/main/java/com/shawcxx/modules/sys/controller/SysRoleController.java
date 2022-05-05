@@ -29,7 +29,6 @@ public class SysRoleController {
 
 
     @PostMapping("query")
-    @SaCheckLogin
     @SaCheckRole("admin")
     public MyResult list(@RequestBody SysRoleQueryForm form) {
         Page<SysRoleDO> page = sysRoleService.query(form);
@@ -38,7 +37,6 @@ public class SysRoleController {
 
     @GetMapping("del")
     @SysLog("删除角色")
-    @SaCheckLogin
     @SaCheckRole("admin")
     public MyResult deleteById(@RequestParam Long id) {
         sysRoleService.delete(id);
@@ -48,7 +46,6 @@ public class SysRoleController {
 
     @PostMapping("saveOrUpdate")
     @SysLog("新增或修改角色")
-    @SaCheckLogin
     @SaCheckRole("admin")
     public MyResult insertOrUpdate(@RequestBody @Validated SysRoleForm form) {
         sysRoleService.saveOrUpdate(form);
@@ -57,7 +54,6 @@ public class SysRoleController {
     }
 
     @PostMapping("info")
-    @SaCheckLogin
     @SaCheckRole("admin")
     public MyResult queryPage(@RequestParam Long id) {
         SysRoleDTO sysRoleDTO = sysRoleService.info(id);
