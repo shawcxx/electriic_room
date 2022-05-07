@@ -2,6 +2,7 @@ package com.shawcxx.modules.sys.domain;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.util.Date;
@@ -12,6 +13,7 @@ import java.util.Date;
  * @description
  */
 @Data
+@TableName("sys_dept")
 public class SysDeptDO {
     @TableId(type = IdType.AUTO)
     private Long deptId;

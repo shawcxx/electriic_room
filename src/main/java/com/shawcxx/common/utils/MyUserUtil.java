@@ -20,6 +20,12 @@ public class MyUserUtil {
         return user;
     }
 
-
+    public static Long getDeptId() {
+        Long deptId = getUser().getDeptId();
+        if (deptId.equals(0L)) {
+            return null;
+        }
+        return deptId;
+    }
 }
 

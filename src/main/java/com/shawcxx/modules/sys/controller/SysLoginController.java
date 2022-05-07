@@ -28,7 +28,7 @@ public class SysLoginController {
 
     @PostMapping("login")
     public MyResult login(@RequestBody @Validated LoginForm form) {
-        sysVerificationCodeService.check(form.getVerifyCode(), form.getVerifyCodeToken());
+//        sysVerificationCodeService.check(form.getVerifyCode(), form.getVerifyCodeToken());
         return sysLoginService.login(form);
     }
 
