@@ -7,6 +7,7 @@ import com.shawcxx.modules.project.dto.ProjectAddressDTO;
 import com.shawcxx.modules.project.dto.ProjectListDTO;
 import com.shawcxx.modules.project.service.ProjectService;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -35,5 +36,13 @@ public class ProjectController {
     public MyResult addressInfo(@RequestParam String id) {
         List<ProjectAddressDTO> list = projectService.addressInfo(id);
         return MyResult.data(list);
+    }
+
+
+    @PostMapping("fileImport")
+    @SaCheckLogin
+    public MyResult fileImport(@RequestParam("file") MultipartFile file, @RequestParam String id) {
+        projectService.fileImport(file,id);
+        return MyResult.ok();
     }
 }
