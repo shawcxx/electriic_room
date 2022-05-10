@@ -19,5 +19,7 @@ public class AddressController {
     @Resource
     private AddressService addressService;
 
-
+    public MyResult addAddress() {
+        return MyResult.ok();
+    }
 }

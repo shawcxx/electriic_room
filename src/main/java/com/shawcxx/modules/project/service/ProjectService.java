@@ -1,7 +1,6 @@
 package com.shawcxx.modules.project.service;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.lang.tree.TreeUtil;
 import cn.hutool.poi.excel.ExcelReader;
 import cn.hutool.poi.excel.ExcelUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -10,7 +9,6 @@ import com.shawcxx.common.utils.MyUserUtil;
 import com.shawcxx.modules.project.dao.ProjectDAO;
 import com.shawcxx.modules.project.domain.AddressDO;
 import com.shawcxx.modules.project.domain.ProjectDO;
-import com.shawcxx.modules.project.dto.AddressDTO;
 import com.shawcxx.modules.project.dto.ProjectAddressDTO;
 import com.shawcxx.modules.project.dto.ProjectDTO;
 import com.shawcxx.modules.project.dto.ProjectListDTO;
@@ -20,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -80,8 +79,17 @@ public class ProjectService extends ServiceImpl<ProjectDAO, ProjectDO> {
         return new ArrayList<>(map.computeIfAbsent("0", k -> new ArrayList<>()));
     }
 
-    public void fileImport(MultipartFile file, String id) {
-        ExcelReader reader = ExcelUtil.getReader(file.getInputStream());
-        List<Map<String, Object>> maps = reader.readAll();
+    public void fileImport(MultipartFile file) {
+        try {
+            ExcelReader reader = ExcelUtil.getReader(file.getInputStream());
+            List<Map<String, Object>> maps = reader.readAll();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
+
+    public static void main(String[] args) {
+
+    }
+
 }
