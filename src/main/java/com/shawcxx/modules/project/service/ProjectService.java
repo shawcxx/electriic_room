@@ -1,11 +1,18 @@
 package com.shawcxx.modules.project.service;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.poi.excel.ExcelReader;
 import cn.hutool.poi.excel.ExcelUtil;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.shawcxx.common.utils.MyUserUtil;
+import com.shawcxx.modules.device.bo.DeviceEnum;
+import com.shawcxx.modules.project.bo.AddressEnum;
+import com.shawcxx.modules.project.bo.ProjectImportBO;
 import com.shawcxx.modules.project.dao.ProjectDAO;
 import com.shawcxx.modules.project.domain.AddressDO;
 import com.shawcxx.modules.project.domain.ProjectDO;
@@ -14,7 +21,9 @@ import com.shawcxx.modules.project.dto.ProjectDTO;
 import com.shawcxx.modules.project.dto.ProjectListDTO;
 import com.shawcxx.modules.sys.domain.SysDeptDO;
 import com.shawcxx.modules.sys.service.SysDeptService;
+import org.apache.tomcat.jni.Address;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -79,6 +88,7 @@ public class ProjectService extends ServiceImpl<ProjectDAO, ProjectDO> {
         return new ArrayList<>(map.computeIfAbsent("0", k -> new ArrayList<>()));
     }
 
+    @Transactional(rollbackFor = Exception.class)
     public void fileImport(MultipartFile file) {
         try {
             ExcelReader reader = ExcelUtil.getReader(file.getInputStream());
@@ -89,7 +99,14 @@ public class ProjectService extends ServiceImpl<ProjectDAO, ProjectDO> {
     }
 
     public static void main(String[] args) {
+        ExcelReader reader = ExcelUtil.getReader("C:\\Users\\admin\\Desktop\\项目导入模板.xls");
+        String[] titles = new String[]{"配电房", "配电柜", "线路", "测温传感器"};
+        List<Map<String, Object>> maps = reader.readAll();
+        ProjectImportBO projectBO = null;
+        Map<String, ProjectImportBO> addressMap = new HashMap<>();
+        for (Map<String, Object> map : maps) {
 
+        }
     }
 
 }

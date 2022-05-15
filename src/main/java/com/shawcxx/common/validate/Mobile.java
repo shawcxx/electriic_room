@@ -20,7 +20,7 @@ import static java.lang.annotation.ElementType.METHOD;
 @Retention(RetentionPolicy.RUNTIME)
 @Constraint(validatedBy = {MobileValidator.class})
 public @interface Mobile {
-    String message() default "手机号错误";
+    String message() default "手机号长度不正确";
 
     Class<?>[] groups() default {};
 
