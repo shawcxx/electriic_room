@@ -13,9 +13,9 @@ import org.springframework.integration.mqtt.core.MqttPahoClientFactory;
  * @date 2021/6/28 10:53
  * @description
  */
-@Configuration
+//@Configuration
 public class MqttConfig {
-    @Value("${mqtt.host}")
+    @Value("${mqtt.host:}")
     private String mqttHost;
 
     @Value("${mqtt.username:}")

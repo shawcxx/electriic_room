@@ -46,4 +46,16 @@ public class SysDeptService extends ServiceImpl<SysDeptDAO, SysDeptDO> {
         BeanUtil.copyProperties(form, sysDeptDO);
         this.saveOrUpdate(sysDeptDO);
     }
+
+    public SysDeptDO findOrCreate(String deptName) {
+        LambdaQueryWrapper<SysDeptDO> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SysDeptDO::getDeptName, deptName);
+        SysDeptDO deptDO = this.getOne(queryWrapper);
+        if (deptDO == null) {
+            deptDO = new SysDeptDO();
+            deptDO.setDeptName(deptName);
+            this.save(deptDO);
+        }
+        return deptDO;
+    }
 }

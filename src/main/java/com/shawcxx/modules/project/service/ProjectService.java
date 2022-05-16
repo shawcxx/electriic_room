@@ -6,9 +6,11 @@ import cn.hutool.poi.excel.ExcelReader;
 import cn.hutool.poi.excel.ExcelUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.parser.ParserConfig;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.shawcxx.common.exception.MyException;
 import com.shawcxx.common.utils.MyUserUtil;
 import com.shawcxx.modules.device.bo.DeviceEnum;
 import com.shawcxx.modules.project.bo.AddressEnum;
@@ -90,23 +92,180 @@ public class ProjectService extends ServiceImpl<ProjectDAO, ProjectDO> {
 
     @Transactional(rollbackFor = Exception.class)
     public void fileImport(MultipartFile file) {
+        ExcelReader reader = null;
+        List<List<Object>> list = null;
+        ProjectImportBO projectBO = null;
+        String deptName = null;
         try {
-            ExcelReader reader = ExcelUtil.getReader(file.getInputStream());
-            List<Map<String, Object>> maps = reader.readAll();
+            reader = ExcelUtil.getReader(file.getInputStream());
+            list = reader.read();
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new MyException("文件读取失败,请确认文件格式");
+        }
+        try {
+            projectBO = this.parseProject(list);
+        } catch (Exception e) {
+            throw new MyException("导入文件解析失败");
+        }
+        try {
+            deptName = list.get(0).get(0).toString();
+        } catch (Exception e) {
+            throw new MyException("运营商字段获取失败");
+        }
+        SysDeptDO deptDO = sysDeptService.findOrCreate(deptName);
+        ProjectDO projectDO = new ProjectDO();
+        projectDO.setProjectName(projectBO.getName());
+        projectDO.setDeptId(deptDO.getDeptId());
+        this.saveProject(projectDO);
+        this.saveItem(projectBO.getChild(), projectDO.getProjectId(), deptDO.getDeptId(), "0");
+
+    }
+
+    private void saveItem(List<ProjectImportBO> list, String projectId, Long deptId, String parentAddressId) {
+        for (ProjectImportBO projectImportBO : list) {
+            if (projectImportBO.getFlag() == 2) {
+                AddressDO addressDO = new AddressDO();
+                addressDO.setAddressName(projectImportBO.getName());
+                addressDO.setAddressType(projectImportBO.getType());
+                addressDO.setProjectId(projectId);
+                addressDO.setParentAddressId(parentAddressId);
+                addressService.save(addressDO);
+                this.saveItem(projectImportBO.getChild(), projectId, deptId, addressDO.getAddressId());
+            }
+            if (projectImportBO.getFlag() == 3) {
+
+            }
         }
     }
 
-    public static void main(String[] args) {
-        ExcelReader reader = ExcelUtil.getReader("C:\\Users\\admin\\Desktop\\项目导入模板.xls");
-        String[] titles = new String[]{"配电房", "配电柜", "线路", "测温传感器"};
-        List<Map<String, Object>> maps = reader.readAll();
-        ProjectImportBO projectBO = null;
-        Map<String, ProjectImportBO> addressMap = new HashMap<>();
-        for (Map<String, Object> map : maps) {
-
+    private void saveProject(ProjectDO projectDO) {
+        String projectName = projectDO.getProjectName();
+        Long deptId = projectDO.getDeptId();
+        LambdaQueryWrapper<ProjectDO> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ProjectDO::getProjectName, projectName);
+        queryWrapper.eq(ProjectDO::getDeptId, deptId);
+        ProjectDO one = this.getOne(queryWrapper);
+        if (one != null) {
+            throw new MyException("已存在的项目名");
         }
+        this.save(projectDO);
+    }
+
+    private ProjectImportBO parseProject(List<List<Object>> list) {
+        ProjectImportBO projectBO = null;
+        for (int i = 0; i < list.size(); i++) {
+            List<Object> values = list.get(i);
+            if (i <= 1) {
+                continue;
+            }
+            String projectName = values.get(0) == null ? "" : values.get(0).toString();
+            String roomName = values.get(1) == null ? "" : values.get(1).toString();
+            String cabinetName = values.get(2) == null ? "" : values.get(2).toString();
+            String lineName = values.get(3) == null ? "" : values.get(3).toString();
+            String censorId = values.get(4) == null ? "" : values.get(4).toString();
+            String modbus = values.get(5) == null ? "" : values.get(5).toString();
+            String imei = values.get(6) == null ? "" : values.get(6).toString();
+            if (projectBO == null) {
+                projectBO = new ProjectImportBO(projectName);
+            }
+
+            DeviceEnum deviceEnum = DeviceEnum.getByName(roomName);
+            if (deviceEnum == null) {
+                projectBO.addChildAddress(roomName, AddressEnum.ROOM.getAddressType(), true);
+            } else {
+                projectBO.addChildDevice(roomName, deviceEnum.getDeviceType(), imei, modbus);
+                continue;
+            }
+
+            ProjectImportBO room = projectBO.getChildByName(roomName);
+            deviceEnum = DeviceEnum.getByName(cabinetName);
+            if (deviceEnum == null) {
+                room.addChildAddress(cabinetName, AddressEnum.CABINET.getAddressType(), true);
+            } else {
+                room.addChildDevice(cabinetName, deviceEnum.getDeviceType(), imei, modbus);
+                continue;
+            }
+
+
+            ProjectImportBO cabinet = room.getChildByName(cabinetName);
+            deviceEnum = DeviceEnum.getByName(lineName);
+            if (deviceEnum == null) {
+                cabinet.addChildAddress(lineName, AddressEnum.LINE.getAddressType(), true);
+            } else {
+                cabinet.addChildDevice(lineName, deviceEnum.getDeviceType(), imei, modbus);
+                continue;
+            }
+
+            ProjectImportBO line = cabinet.getChildByName(lineName);
+            if (StrUtil.isNotBlank(censorId)) {
+                line.addChildDevice(censorId, DeviceEnum.DEVICE_3001.getDeviceType(), imei, modbus);
+            }
+        }
+        return projectBO;
+    }
+
+    public static void main(String[] args) {
+        ExcelReader reader = ExcelUtil.getReader("C:\\Users\\admin\\Desktop\\第一个测试项目.xls");
+        List<List<Object>> list = reader.read();
+        SysDeptDO deptDO = null;
+        ProjectImportBO projectBO = null;
+        for (int i = 0; i < list.size(); i++) {
+            List<Object> values = list.get(i);
+            if (i == 0) {
+                String deptName = values.get(0).toString();
+                if (deptDO == null) {
+                    System.out.println(deptName);
+                }
+                //todo 运营商判断操作
+                continue;
+            }
+            if (i == 1) {
+                continue;
+            }
+            String projectName = values.get(0) == null ? "" : values.get(0).toString();
+            String roomName = values.get(1) == null ? "" : values.get(1).toString();
+            String cabinetName = values.get(2) == null ? "" : values.get(2).toString();
+            String lineName = values.get(3) == null ? "" : values.get(3).toString();
+            String censorId = values.get(4) == null ? "" : values.get(4).toString();
+            String modbus = values.get(5) == null ? "" : values.get(5).toString();
+            String imei = values.get(6) == null ? "" : values.get(6).toString();
+            if (projectBO == null) {
+                projectBO = new ProjectImportBO(projectName);
+            }
+
+            DeviceEnum deviceEnum = DeviceEnum.getByName(roomName);
+            if (deviceEnum == null) {
+                projectBO.addChildAddress(roomName, AddressEnum.ROOM.getAddressType(), true);
+            } else {
+                projectBO.addChildDevice(roomName, deviceEnum.getDeviceType(), imei, modbus);
+                continue;
+            }
+
+            ProjectImportBO room = projectBO.getChildByName(roomName);
+            deviceEnum = DeviceEnum.getByName(cabinetName);
+            if (deviceEnum == null) {
+                room.addChildAddress(cabinetName, AddressEnum.CABINET.getAddressType(), true);
+            } else {
+                room.addChildDevice(cabinetName, deviceEnum.getDeviceType(), imei, modbus);
+                continue;
+            }
+
+
+            ProjectImportBO cabinet = room.getChildByName(cabinetName);
+            deviceEnum = DeviceEnum.getByName(lineName);
+            if (deviceEnum == null) {
+                cabinet.addChildAddress(lineName, AddressEnum.LINE.getAddressType(), true);
+            } else {
+                cabinet.addChildDevice(lineName, deviceEnum.getDeviceType(), imei, modbus);
+                continue;
+            }
+
+            ProjectImportBO line = cabinet.getChildByName(lineName);
+            if (StrUtil.isNotBlank(censorId)) {
+                line.addChildDevice(censorId, DeviceEnum.DEVICE_3001.getDeviceType(), imei, modbus);
+            }
+        }
+        System.out.println(JSON.toJSONString(projectBO));
     }
 
 }

@@ -22,11 +22,11 @@ import javax.annotation.Resource;
  * @description
  */
 @Slf4j
-@Service
+//@Service
 public class MqttService {
-    @Value("${mqtt.clientId}")
+    @Value("${mqtt.clientId:}")
     private String clientId;
-    @Value("${mqtt.topics}")
+    @Value("${mqtt.topics:}")
     private String[] topics;
     @Resource
     private MqttPahoClientFactory factory;
