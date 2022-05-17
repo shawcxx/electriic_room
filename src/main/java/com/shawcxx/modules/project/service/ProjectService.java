@@ -13,6 +13,8 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.shawcxx.common.exception.MyException;
 import com.shawcxx.common.utils.MyUserUtil;
 import com.shawcxx.modules.device.bo.DeviceEnum;
+import com.shawcxx.modules.device.domain.DeviceDO;
+import com.shawcxx.modules.device.service.DeviceService;
 import com.shawcxx.modules.project.bo.AddressEnum;
 import com.shawcxx.modules.project.bo.ProjectImportBO;
 import com.shawcxx.modules.project.dao.ProjectDAO;
@@ -47,6 +49,8 @@ public class ProjectService extends ServiceImpl<ProjectDAO, ProjectDO> {
     private SysDeptService sysDeptService;
     @Resource
     private AddressService addressService;
+    @Resource
+    private DeviceService deviceService;
 
     public List<ProjectListDTO> projectList() {
         List<ProjectListDTO> list = new ArrayList<>();
@@ -64,8 +68,12 @@ public class ProjectService extends ServiceImpl<ProjectDAO, ProjectDO> {
                 if (CollUtil.isNotEmpty(pList)) {
                     ProjectListDTO projectListDTO = new ProjectListDTO();
                     projectListDTO.setDeptName(sysDeptDO.getDeptName());
-                    //todo 设备数统计
-                    projectListDTO.setProjectList(pList.stream().map(ProjectDTO::new).collect(Collectors.toList()));
+                    List<ProjectDTO> deptProjectList = pList.stream().map(ProjectDTO::new).collect(Collectors.toList());
+                    // 设备数统计
+                    for (ProjectDTO projectDTO : deptProjectList) {
+                        projectDTO.setDeviceNum(deviceService.count(new LambdaQueryWrapper<DeviceDO>().eq(DeviceDO::getProjectId, projectDTO.getProjectId()).lt(DeviceDO::getDeviceType, 3000)));
+                    }
+                    projectListDTO.setProjectList(deptProjectList);
                     list.add(projectListDTO);
                 }
             }
@@ -86,7 +94,19 @@ public class ProjectService extends ServiceImpl<ProjectDAO, ProjectDO> {
             List<ProjectAddressDTO> parent = map.computeIfAbsent(addressDO.getParentAddressId(), o -> new ArrayList<>());
             parent.add(projectAddressDTO);
         }
-        //todo 设备列表
+
+        // 设备列表
+        List<DeviceDO> deviceList = deviceService.list(new LambdaQueryWrapper<DeviceDO>().eq(DeviceDO::getProjectId, id));
+        for (DeviceDO deviceDO : deviceList) {
+            List<ProjectAddressDTO> list = map.get(deviceDO.getAddressId());
+            if (list != null) {
+                ProjectAddressDTO projectAddressDTO = new ProjectAddressDTO();
+                projectAddressDTO.setId(deviceDO.getDeviceId().toString());
+                projectAddressDTO.setName(deviceDO.getDeviceName());
+                projectAddressDTO.setType(deviceDO.getDeviceType()/1000);
+                list.add(projectAddressDTO);
+            }
+        }
         return new ArrayList<>(map.computeIfAbsent("0", k -> new ArrayList<>()));
     }
 
@@ -131,9 +151,16 @@ public class ProjectService extends ServiceImpl<ProjectDAO, ProjectDO> {
                 addressDO.setParentAddressId(parentAddressId);
                 addressService.save(addressDO);
                 this.saveItem(projectImportBO.getChild(), projectId, deptId, addressDO.getAddressId());
-            }
-            if (projectImportBO.getFlag() == 3) {
-
+            } else if (projectImportBO.getFlag() == 3) {
+                DeviceDO deviceDO = new DeviceDO();
+                deviceDO.setAddressId(parentAddressId);
+                deviceDO.setProjectId(projectId);
+                deviceDO.setDeviceName(projectImportBO.getName());
+                deviceDO.setDeviceType(projectImportBO.getType());
+                deviceDO.setDeptId(deptId);
+                deviceDO.setImei(projectImportBO.getImei());
+                deviceDO.setModbus(projectImportBO.getModbus());
+                deviceService.saveDevice(deviceDO);
             }
         }
     }

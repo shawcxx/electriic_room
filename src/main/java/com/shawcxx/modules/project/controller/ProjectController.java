@@ -40,7 +40,7 @@ public class ProjectController {
 
 
     @PostMapping("projectImport")
-//    @SaCheckLogin
+    @SaCheckLogin
     public MyResult projectImport(@RequestParam("file") MultipartFile file) {
         projectService.fileImport(file);
         return MyResult.ok();
