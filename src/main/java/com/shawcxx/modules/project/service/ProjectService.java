@@ -25,6 +25,7 @@ import com.shawcxx.modules.project.dto.ProjectDTO;
 import com.shawcxx.modules.project.dto.ProjectListDTO;
 import com.shawcxx.modules.sys.domain.SysDeptDO;
 import com.shawcxx.modules.sys.service.SysDeptService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.jni.Address;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,6 +45,7 @@ import java.util.stream.Collectors;
  * @description
  */
 @Service
+@Slf4j
 public class ProjectService extends ServiceImpl<ProjectDAO, ProjectDO> {
     @Resource
     private SysDeptService sysDeptService;
@@ -103,7 +105,7 @@ public class ProjectService extends ServiceImpl<ProjectDAO, ProjectDO> {
                 ProjectAddressDTO projectAddressDTO = new ProjectAddressDTO();
                 projectAddressDTO.setId(deviceDO.getDeviceId().toString());
                 projectAddressDTO.setName(deviceDO.getDeviceName());
-                projectAddressDTO.setType(deviceDO.getDeviceType()/1000);
+                projectAddressDTO.setType(deviceDO.getDeviceType() / 1000);
                 list.add(projectAddressDTO);
             }
         }
@@ -120,16 +122,19 @@ public class ProjectService extends ServiceImpl<ProjectDAO, ProjectDO> {
             reader = ExcelUtil.getReader(file.getInputStream());
             list = reader.read();
         } catch (IOException e) {
+            log.error("文件读取失败,请确认文件格式", e);
             throw new MyException("文件读取失败,请确认文件格式");
         }
         try {
             projectBO = this.parseProject(list);
         } catch (Exception e) {
+            log.error("导入文件解析失败", e);
             throw new MyException("导入文件解析失败");
         }
         try {
             deptName = list.get(0).get(0).toString();
         } catch (Exception e) {
+            log.error("运营商字段获取失败", e);
             throw new MyException("运营商字段获取失败");
         }
         SysDeptDO deptDO = sysDeptService.findOrCreate(deptName);
@@ -137,8 +142,29 @@ public class ProjectService extends ServiceImpl<ProjectDAO, ProjectDO> {
         projectDO.setProjectName(projectBO.getName());
         projectDO.setDeptId(deptDO.getDeptId());
         this.saveProject(projectDO);
+        this.setImeiAndModbus(projectBO);
         this.saveItem(projectBO.getChild(), projectDO.getProjectId(), deptDO.getDeptId(), "0");
 
+    }
+
+    private void setImeiAndModbus(ProjectImportBO projectBO) {
+        if (CollUtil.isNotEmpty(projectBO.getChild())) {
+            for (ProjectImportBO projectImportBO : projectBO.getChild()) {
+                if (StrUtil.isNotBlank(projectImportBO.getImei())) {
+                    projectBO.setImei(projectImportBO.getImei());
+                }
+                if (StrUtil.isNotBlank(projectImportBO.getModbus())) {
+                    projectBO.setModbus(projectImportBO.getModbus());
+                }
+            }
+            for (ProjectImportBO projectImportBO : projectBO.getChild()) {
+                if (StrUtil.isAllBlank(projectImportBO.getImei(), projectImportBO.getModbus())) {
+                    projectImportBO.setImei(projectBO.getImei());
+                    projectImportBO.setModbus(projectBO.getModbus());
+                }
+                this.setImeiAndModbus(projectImportBO);
+            }
+        }
     }
 
     private void saveItem(List<ProjectImportBO> list, String projectId, Long deptId, String parentAddressId) {
@@ -185,17 +211,20 @@ public class ProjectService extends ServiceImpl<ProjectDAO, ProjectDO> {
             if (i <= 1) {
                 continue;
             }
-            String projectName = values.get(0) == null ? "" : values.get(0).toString();
-            String roomName = values.get(1) == null ? "" : values.get(1).toString();
-            String cabinetName = values.get(2) == null ? "" : values.get(2).toString();
-            String lineName = values.get(3) == null ? "" : values.get(3).toString();
-            String censorId = values.get(4) == null ? "" : values.get(4).toString();
-            String modbus = values.get(5) == null ? "" : values.get(5).toString();
-            String imei = values.get(6) == null ? "" : values.get(6).toString();
+            String projectName = CollUtil.get(values, 0) == null ? "" : values.get(0).toString();
+            String roomName = CollUtil.get(values, 1) == null ? "" : values.get(1).toString();
+            String cabinetName = CollUtil.get(values, 2) == null ? "" : values.get(2).toString();
+            String lineName = CollUtil.get(values, 3) == null ? "" : values.get(3).toString();
+            String censorId = CollUtil.get(values, 4) == null ? "" : values.get(4).toString();
+            String modbus = CollUtil.get(values, 5) == null ? null : values.get(5).toString();
+            String imei = CollUtil.get(values, 6) == null ? null : values.get(6).toString();
             if (projectBO == null) {
                 projectBO = new ProjectImportBO(projectName);
             }
 
+            if (StrUtil.isBlank(roomName)) {
+                continue;
+            }
             DeviceEnum deviceEnum = DeviceEnum.getByName(roomName);
             if (deviceEnum == null) {
                 projectBO.addChildAddress(roomName, AddressEnum.ROOM.getAddressType(), true);
@@ -204,6 +233,10 @@ public class ProjectService extends ServiceImpl<ProjectDAO, ProjectDO> {
                 continue;
             }
 
+
+            if (StrUtil.isBlank(cabinetName)) {
+                continue;
+            }
             ProjectImportBO room = projectBO.getChildByName(roomName);
             deviceEnum = DeviceEnum.getByName(cabinetName);
             if (deviceEnum == null) {
@@ -213,7 +246,9 @@ public class ProjectService extends ServiceImpl<ProjectDAO, ProjectDO> {
                 continue;
             }
 
-
+            if (StrUtil.isBlank(lineName)) {
+                continue;
+            }
             ProjectImportBO cabinet = room.getChildByName(cabinetName);
             deviceEnum = DeviceEnum.getByName(lineName);
             if (deviceEnum == null) {
@@ -230,69 +265,4 @@ public class ProjectService extends ServiceImpl<ProjectDAO, ProjectDO> {
         }
         return projectBO;
     }
-
-    public static void main(String[] args) {
-        ExcelReader reader = ExcelUtil.getReader("C:\\Users\\admin\\Desktop\\第一个测试项目.xls");
-        List<List<Object>> list = reader.read();
-        SysDeptDO deptDO = null;
-        ProjectImportBO projectBO = null;
-        for (int i = 0; i < list.size(); i++) {
-            List<Object> values = list.get(i);
-            if (i == 0) {
-                String deptName = values.get(0).toString();
-                if (deptDO == null) {
-                    System.out.println(deptName);
-                }
-                //todo 运营商判断操作
-                continue;
-            }
-            if (i == 1) {
-                continue;
-            }
-            String projectName = values.get(0) == null ? "" : values.get(0).toString();
-            String roomName = values.get(1) == null ? "" : values.get(1).toString();
-            String cabinetName = values.get(2) == null ? "" : values.get(2).toString();
-            String lineName = values.get(3) == null ? "" : values.get(3).toString();
-            String censorId = values.get(4) == null ? "" : values.get(4).toString();
-            String modbus = values.get(5) == null ? "" : values.get(5).toString();
-            String imei = values.get(6) == null ? "" : values.get(6).toString();
-            if (projectBO == null) {
-                projectBO = new ProjectImportBO(projectName);
-            }
-
-            DeviceEnum deviceEnum = DeviceEnum.getByName(roomName);
-            if (deviceEnum == null) {
-                projectBO.addChildAddress(roomName, AddressEnum.ROOM.getAddressType(), true);
-            } else {
-                projectBO.addChildDevice(roomName, deviceEnum.getDeviceType(), imei, modbus);
-                continue;
-            }
-
-            ProjectImportBO room = projectBO.getChildByName(roomName);
-            deviceEnum = DeviceEnum.getByName(cabinetName);
-            if (deviceEnum == null) {
-                room.addChildAddress(cabinetName, AddressEnum.CABINET.getAddressType(), true);
-            } else {
-                room.addChildDevice(cabinetName, deviceEnum.getDeviceType(), imei, modbus);
-                continue;
-            }
-
-
-            ProjectImportBO cabinet = room.getChildByName(cabinetName);
-            deviceEnum = DeviceEnum.getByName(lineName);
-            if (deviceEnum == null) {
-                cabinet.addChildAddress(lineName, AddressEnum.LINE.getAddressType(), true);
-            } else {
-                cabinet.addChildDevice(lineName, deviceEnum.getDeviceType(), imei, modbus);
-                continue;
-            }
-
-            ProjectImportBO line = cabinet.getChildByName(lineName);
-            if (StrUtil.isNotBlank(censorId)) {
-                line.addChildDevice(censorId, DeviceEnum.DEVICE_3001.getDeviceType(), imei, modbus);
-            }
-        }
-        System.out.println(JSON.toJSONString(projectBO));
-    }
-
 }

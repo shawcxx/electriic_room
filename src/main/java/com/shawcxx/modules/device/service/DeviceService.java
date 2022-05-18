@@ -17,13 +17,20 @@ import org.springframework.stereotype.Service;
 @Service
 public class DeviceService extends ServiceImpl<DeviceDAO, DeviceDO> {
     public void saveDevice(DeviceDO deviceDO) {
-        if (StrUtil.isNotBlank(deviceDO.getImei())) {
+        if (StrUtil.isNotBlank(deviceDO.getImei()) && deviceDO.getDeviceType() < 3000) {
             LambdaQueryWrapper<DeviceDO> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(DeviceDO::getImei, deviceDO.getImei());
+            queryWrapper.lt(DeviceDO::getDeviceType, 3000);
             if (this.count(queryWrapper) > 0) {
                 throw new MyException("imei:" + deviceDO.getImei() + ",已被使用");
             }
         }
         this.save(deviceDO);
+    }
+
+    public DeviceDO getByImei(String imei) {
+        LambdaQueryWrapper<DeviceDO> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(DeviceDO::getImei, imei);
+        return this.getOne(queryWrapper);
     }
 }

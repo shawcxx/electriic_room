@@ -1,9 +1,13 @@
 package com.shawcxx.modules.device.service;
 
+import com.alibaba.fastjson.JSONObject;
+import com.shawcxx.modules.device.domain.DeviceDO;
+import com.shawcxx.modules.project.domain.AddressDO;
 import com.shawcxx.modules.project.service.AddressService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * @author cjl
@@ -19,6 +23,14 @@ public class DataDealService {
 
 
     public void dealData(String data) {
+        JSONObject json = JSONObject.parseObject(data);
+        String imei = json.getString("imei");
+        DeviceDO deviceDO = deviceService.getByImei(imei);
+        if (deviceDO != null) {
+            AddressDO addressDO = addressService.getById(deviceDO.getAddressId());
 
+        }
     }
+
+
 }
