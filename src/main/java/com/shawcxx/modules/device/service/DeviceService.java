@@ -9,6 +9,8 @@ import com.shawcxx.modules.device.dao.DeviceDAO;
 import com.shawcxx.modules.device.domain.DeviceDO;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 /**
  * @author cjl
  * @date 2022/5/17 11:00
@@ -32,5 +34,14 @@ public class DeviceService extends ServiceImpl<DeviceDAO, DeviceDO> {
         LambdaQueryWrapper<DeviceDO> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(DeviceDO::getImei, imei);
         return this.getOne(queryWrapper);
+    }
+
+    public List<DeviceDO> getDeviceList(String imei, String addr, Integer deviceType) {
+        LambdaQueryWrapper<DeviceDO> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(DeviceDO::getImei, imei);
+        queryWrapper.eq(DeviceDO::getModbus, addr);
+        queryWrapper.eq(DeviceDO::getDeviceType, deviceType);
+        queryWrapper.orderByAsc(DeviceDO::getDeviceId);
+        return this.list(queryWrapper);
     }
 }
