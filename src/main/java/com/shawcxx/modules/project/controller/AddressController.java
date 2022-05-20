@@ -5,10 +5,7 @@ import com.shawcxx.common.base.MyResult;
 import com.shawcxx.modules.project.form.AddressForm;
 import com.shawcxx.modules.project.service.AddressService;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 
@@ -25,7 +22,15 @@ public class AddressController {
 
     @PostMapping("add")
     @SaCheckLogin
-    public MyResult addAddress(@RequestBody @Validated AddressForm form) {
+    public MyResult add(@RequestBody @Validated AddressForm form) {
+        addressService.add(form);
+        return MyResult.ok();
+    }
+
+    @PostMapping("delete")
+    @SaCheckLogin
+    public MyResult delete(@RequestParam String id) {
+        addressService.delete(id);
         return MyResult.ok();
     }
 }

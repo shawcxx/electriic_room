@@ -17,8 +17,6 @@ public class AddressForm {
     private Integer addressType;
     @NotBlank(message = "房间名称不能为空")
     private String addressName;
-    @NotBlank(message = "项目不能为空")
-    private String projectId;
     @NotBlank(message = "参数错误")
     private String parentAddressId;
 }

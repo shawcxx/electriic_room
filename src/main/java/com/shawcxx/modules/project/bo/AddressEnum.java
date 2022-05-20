@@ -24,6 +24,7 @@ public enum AddressEnum {
     private final String addressName;
     private final Integer addressType;
 
+
     public Integer getAddressType() {
         return addressType;
     }
@@ -35,6 +36,15 @@ public enum AddressEnum {
     public static AddressEnum getByName(String addressName) {
         for (AddressEnum value : values()) {
             if (value.getAddressName().equals(addressName)) {
+                return value;
+            }
+        }
+        return null;
+    }
+
+    public static AddressEnum getByType(Integer addressType) {
+        for (AddressEnum value : values()) {
+            if (value.getAddressType().equals(addressType)) {
                 return value;
             }
         }
