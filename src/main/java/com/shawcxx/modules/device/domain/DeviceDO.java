@@ -31,4 +31,5 @@ public class DeviceDO {
     private Date createTime;
     @TableField(updateStrategy = FieldStrategy.NEVER)
     private Date updateTime;
+    private Date deviceLastTime;
 }

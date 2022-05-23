@@ -134,8 +134,8 @@ public class ProjectService extends ServiceImpl<ProjectDAO, ProjectDO> {
         try {
             deptName = list.get(0).get(0).toString();
         } catch (Exception e) {
-            log.error("运营商字段获取失败", e);
-            throw new MyException("运营商字段获取失败");
+            log.error("运营商获取失败", e);
+            throw new MyException("运营商获取失败");
         }
         SysDeptDO deptDO = sysDeptService.findOrCreate(deptName);
         ProjectDO projectDO = new ProjectDO();

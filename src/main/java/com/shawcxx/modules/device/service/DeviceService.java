@@ -39,6 +39,7 @@ public class DeviceService extends ServiceImpl<DeviceDAO, DeviceDO> {
 
     public DeviceDO getByImei(String imei) {
         LambdaQueryWrapper<DeviceDO> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.lt(DeviceDO::getDeviceType, 3000);
         queryWrapper.eq(DeviceDO::getImei, imei);
         return this.getOne(queryWrapper);
     }

@@ -18,6 +18,12 @@ public class SysDeptDTO {
 
     private String deptName;
 
+    private String manager;
+    private String phone;
+    private String address;
+    private Long projectNum;
+    private Long deviceNum;
+
     public SysDeptDTO(SysDeptDO sysDeptDO) {
         BeanUtil.copyProperties(sysDeptDO, this);
     }

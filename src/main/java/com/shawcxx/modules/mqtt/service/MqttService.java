@@ -1,5 +1,6 @@
 package com.shawcxx.modules.mqtt.service;
 
+import com.shawcxx.modules.device.service.DataDealService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,7 +23,7 @@ import javax.annotation.Resource;
  * @description
  */
 @Slf4j
-//@Service
+@Service
 public class MqttService {
     @Value("${mqtt.clientId:}")
     private String clientId;
@@ -30,7 +31,8 @@ public class MqttService {
     private String[] topics;
     @Resource
     private MqttPahoClientFactory factory;
-
+    @Resource
+    private DataDealService dataDealService;
     private MqttPahoMessageDrivenChannelAdapter adapter;
 
     /**
@@ -62,6 +64,7 @@ public class MqttService {
                 String topic = message.getHeaders().get("mqtt_receivedTopic").toString();
 //                DataHandleService dataHandleService = SpringUtil.getBean(topic + "Service");
                 log.info("主题:{},接收到的消息:{}", topic, data);
+                dataDealService.dealData(data);
 //                if (StrUtil.isNotBlank(data)) {
 //                    dataHandleService.handleData(data);
 //                }

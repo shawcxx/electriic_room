@@ -16,4 +16,7 @@ public class SysDeptForm {
     @NotBlank(message = "运营商名称不能为空")
     @Size(max = 50,message = "运营商名称过长")
     private String deptName;
+    private String manager;
+    private String phone;
+    private String address;
 }

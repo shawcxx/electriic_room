@@ -4,6 +4,8 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.shawcxx.modules.device.bo.DeviceEnum;
 import com.shawcxx.modules.device.domain.DeviceDO;
 import com.shawcxx.modules.device.domain.DeviceTemperatureDO;
@@ -30,11 +32,15 @@ public class DataDealService {
     @Resource
     private DeviceTemperatureService deviceTemperatureService;
 
+    @Resource
+    private AddressService addressService;
+
     public void dealData(String record) {
         JSONObject json = JSONObject.parseObject(record);
         String imei = json.getString("IMEI");
-        Long time = json.getLong("time");
+        Long time = json.getLong("time") * 1000;
         JSONArray jsonArray = json.getJSONArray("data");
+        DeviceDO device = deviceService.getByImei(imei);
         for (int i = 0; i < jsonArray.size(); i++) {
             try {
                 JSONObject data = jsonArray.getJSONObject(i);
@@ -54,12 +60,13 @@ public class DataDealService {
                     }
                 }
                 if (CollUtil.isNotEmpty(temperatureList)) {
-                    deviceTemperatureService.saveOrUpdateBatch(temperatureList);
+                    deviceTemperatureService.saveBatch(temperatureList);
                 }
             } catch (Exception e) {
                 log.error("数据处理失败", e);
             }
         }
+        deviceService.update(new LambdaUpdateWrapper<DeviceDO>().set(DeviceDO::getDeviceLastTime, DateUtil.date()).eq(DeviceDO::getAddressId, device.getAddressId()));
     }
 
 

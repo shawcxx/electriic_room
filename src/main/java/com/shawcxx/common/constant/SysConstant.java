@@ -26,6 +26,8 @@ public class SysConstant {
      * 逻辑删除以删除标识
      */
     public static final Integer DEL_FLAG = 1;
+    public static final int OFFLINE_TIME = 72;
+
     /**
      * 菜单类型
      */

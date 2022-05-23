@@ -20,4 +20,7 @@ public class SysDeptDO {
 
     private String deptName;
 
+    private String manager;
+    private String phone;
+    private String address;
 }

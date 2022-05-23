@@ -61,7 +61,7 @@ public class AddressService extends ServiceImpl<AddressDAO, AddressDO> {
         }
     }
 
-    private List<AddressDO> getByParentId(String id) {
+    public List<AddressDO> getByParentId(String id) {
         LambdaQueryWrapper<AddressDO> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(AddressDO::getParentAddressId, id);
         return this.list(queryWrapper);
