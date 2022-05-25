@@ -45,4 +45,11 @@ public class ProjectController {
         projectService.fileImport(file);
         return MyResult.ok();
     }
+
+    @PostMapping("delete")
+    @SaCheckLogin
+    public MyResult delete(@RequestParam String id) {
+        projectService.delete(id);
+        return MyResult.ok();
+    }
 }

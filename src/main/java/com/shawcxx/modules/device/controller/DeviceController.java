@@ -24,10 +24,4 @@ public class DeviceController {
     private DeviceService deviceService;
 
 
-    @PostMapping("sensorList")
-    @SaCheckLogin
-    public MyResult sensorList(@RequestParam String addressId) {
-        List<DeviceDTO> list = deviceService.sensorList(addressId);
-        return MyResult.data(list);
-    }
 }

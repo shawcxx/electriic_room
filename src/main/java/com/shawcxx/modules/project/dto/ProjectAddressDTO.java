@@ -14,5 +14,6 @@ public class ProjectAddressDTO {
     private String id;
     private Integer type;
     private String name;
+    private Double temperature;
     private List<ProjectAddressDTO> child;
 }

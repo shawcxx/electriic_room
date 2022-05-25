@@ -17,7 +17,7 @@ import java.util.Date;
 public class DeviceTemperatureDO {
     @TableId(type = IdType.AUTO)
     private Long id;
-    private Long deviceId;
+    private Long sensorId;
     private Double temperature;
     private Date deviceTime;
 

@@ -14,9 +14,9 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class DeviceTemperatureService extends ServiceImpl<DeviceTemperatureDAO, DeviceTemperatureDO> {
-    public Double getDeviceLastRecords(Long deviceId) {
+    public Double getDeviceLastRecords(Long id) {
         LambdaQueryWrapper<DeviceTemperatureDO> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(DeviceTemperatureDO::getDeviceId, deviceId);
+        queryWrapper.eq(DeviceTemperatureDO::getSensorId, id);
         queryWrapper.orderByDesc(DeviceTemperatureDO::getDeviceTime);
         queryWrapper.last("limit 1");
         DeviceTemperatureDO temperatureDO = this.getOne(queryWrapper);

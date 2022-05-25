@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.shawcxx.modules.device.bo.DeviceEnum;
 import com.shawcxx.modules.device.domain.DeviceDO;
+import com.shawcxx.modules.device.domain.DeviceSensorDO;
 import com.shawcxx.modules.device.domain.DeviceTemperatureDO;
 import com.shawcxx.modules.project.domain.AddressDO;
 import com.shawcxx.modules.project.service.AddressService;
@@ -35,6 +36,9 @@ public class DataDealService {
     @Resource
     private AddressService addressService;
 
+    @Resource
+    private DeviceSensorService deviceSensorService;
+
     public void dealData(String record) {
         JSONObject json = JSONObject.parseObject(record);
         String imei = json.getString("IMEI");
@@ -46,14 +50,14 @@ public class DataDealService {
                 JSONObject data = jsonArray.getJSONObject(i);
                 JSONArray temp2 = data.getJSONArray("temp2");
                 String addr = data.getString("addr");
-                List<DeviceDO> list = deviceService.getDeviceList(imei, addr, DeviceEnum.DEVICE_3001.getDeviceType());
+                List<DeviceSensorDO> list = deviceSensorService.getDeviceList(imei, addr, DeviceEnum.DEVICE_3001.getDeviceType());
                 List<DeviceTemperatureDO> temperatureList = new ArrayList<>();
                 for (int j = 0; j < list.size(); j++) {
-                    DeviceDO deviceDO = list.get(j);
+                    DeviceSensorDO deviceSensorDO = list.get(j);
                     Double temperature = CollUtil.get(temp2, j) == null ? null : temp2.getDouble(j);
                     if (temperature != null) {
                         DeviceTemperatureDO deviceTemperatureDO = new DeviceTemperatureDO();
-                        deviceTemperatureDO.setDeviceId(deviceDO.getDeviceId());
+                        deviceTemperatureDO.setSensorId(deviceSensorDO.getSensorId());
                         deviceTemperatureDO.setTemperature(temperature);
                         deviceTemperatureDO.setDeviceTime(DateUtil.date(time));
                         temperatureList.add(deviceTemperatureDO);

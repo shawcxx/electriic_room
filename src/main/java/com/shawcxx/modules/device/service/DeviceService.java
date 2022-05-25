@@ -26,10 +26,9 @@ public class DeviceService extends ServiceImpl<DeviceDAO, DeviceDO> {
     private DeviceTemperatureService deviceTemperatureService;
 
     public void saveDevice(DeviceDO deviceDO) {
-        if (StrUtil.isNotBlank(deviceDO.getImei()) && deviceDO.getDeviceType() < 3000) {
+        if (StrUtil.isNotBlank(deviceDO.getImei())) {
             LambdaQueryWrapper<DeviceDO> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(DeviceDO::getImei, deviceDO.getImei());
-            queryWrapper.lt(DeviceDO::getDeviceType, 3000);
             if (this.count(queryWrapper) > 0) {
                 throw new MyException("imei:" + deviceDO.getImei() + ",已被使用");
             }
@@ -39,19 +38,11 @@ public class DeviceService extends ServiceImpl<DeviceDAO, DeviceDO> {
 
     public DeviceDO getByImei(String imei) {
         LambdaQueryWrapper<DeviceDO> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.lt(DeviceDO::getDeviceType, 3000);
         queryWrapper.eq(DeviceDO::getImei, imei);
         return this.getOne(queryWrapper);
     }
 
-    public List<DeviceDO> getDeviceList(String imei, String addr, Integer deviceType) {
-        LambdaQueryWrapper<DeviceDO> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(DeviceDO::getImei, imei);
-        queryWrapper.eq(DeviceDO::getModbus, addr);
-        queryWrapper.eq(DeviceDO::getDeviceType, deviceType);
-        queryWrapper.orderByAsc(DeviceDO::getDeviceId);
-        return this.list(queryWrapper);
-    }
+
 
     public void removeByAddressId(String addressId) {
         LambdaQueryWrapper<DeviceDO> queryWrapper = new LambdaQueryWrapper<>();
@@ -59,18 +50,5 @@ public class DeviceService extends ServiceImpl<DeviceDAO, DeviceDO> {
         this.remove(queryWrapper);
     }
 
-    public List<DeviceDTO> sensorList(String addressId) {
-        List<DeviceDTO> r = new ArrayList<>();
-        LambdaQueryWrapper<DeviceDO> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(DeviceDO::getAddressId, addressId);
-        queryWrapper.eq(DeviceDO::getDeviceType, DeviceEnum.DEVICE_3001.getDeviceType());
-        List<DeviceDO> list = this.list(queryWrapper);
-        for (DeviceDO deviceDO : list) {
-            DeviceDTO deviceDTO = new DeviceDTO();
-            BeanUtil.copyProperties(deviceDO, deviceDTO);
-            Double temperature = deviceTemperatureService.getDeviceLastRecords(deviceDO.getDeviceId());
-            deviceDTO.setTemperature(temperature);
-        }
-        return r;
-    }
+
 }

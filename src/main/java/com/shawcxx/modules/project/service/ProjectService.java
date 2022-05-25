@@ -14,7 +14,10 @@ import com.shawcxx.common.exception.MyException;
 import com.shawcxx.common.utils.MyUserUtil;
 import com.shawcxx.modules.device.bo.DeviceEnum;
 import com.shawcxx.modules.device.domain.DeviceDO;
+import com.shawcxx.modules.device.domain.DeviceSensorDO;
+import com.shawcxx.modules.device.service.DeviceSensorService;
 import com.shawcxx.modules.device.service.DeviceService;
+import com.shawcxx.modules.device.service.DeviceTemperatureService;
 import com.shawcxx.modules.project.bo.AddressEnum;
 import com.shawcxx.modules.project.bo.ProjectImportBO;
 import com.shawcxx.modules.project.dao.ProjectDAO;
@@ -53,6 +56,10 @@ public class ProjectService extends ServiceImpl<ProjectDAO, ProjectDO> {
     private AddressService addressService;
     @Resource
     private DeviceService deviceService;
+    @Resource
+    private DeviceSensorService deviceSensorService;
+    @Resource
+    private DeviceTemperatureService deviceTemperatureService;
 
     public List<ProjectListDTO> projectList() {
         List<ProjectListDTO> list = new ArrayList<>();
@@ -73,7 +80,7 @@ public class ProjectService extends ServiceImpl<ProjectDAO, ProjectDO> {
                     List<ProjectDTO> deptProjectList = pList.stream().map(ProjectDTO::new).collect(Collectors.toList());
                     // 设备数统计
                     for (ProjectDTO projectDTO : deptProjectList) {
-                        projectDTO.setDeviceNum(deviceService.count(new LambdaQueryWrapper<DeviceDO>().eq(DeviceDO::getProjectId, projectDTO.getProjectId()).lt(DeviceDO::getDeviceType, 3000)));
+                        projectDTO.setDeviceNum(deviceService.count(new LambdaQueryWrapper<DeviceDO>().eq(DeviceDO::getProjectId, projectDTO.getProjectId())));
                     }
                     projectListDTO.setProjectList(deptProjectList);
                     list.add(projectListDTO);
@@ -109,6 +116,22 @@ public class ProjectService extends ServiceImpl<ProjectDAO, ProjectDO> {
                 list.add(projectAddressDTO);
             }
         }
+
+        //传感器列表
+        List<DeviceSensorDO> sensorList = deviceSensorService.list(new LambdaQueryWrapper<DeviceSensorDO>().eq(DeviceSensorDO::getProjectId, id));
+        for (DeviceSensorDO deviceSensorDO : sensorList) {
+            List<ProjectAddressDTO> list = map.get(deviceSensorDO.getAddressId());
+            if (list != null) {
+                ProjectAddressDTO projectAddressDTO = new ProjectAddressDTO();
+                projectAddressDTO.setId(deviceSensorDO.getSensorId().toString());
+                projectAddressDTO.setName(deviceSensorDO.getSensorName());
+                projectAddressDTO.setType(deviceSensorDO.getSensorType() / 1000);
+                Double temperature = deviceTemperatureService.getDeviceLastRecords(deviceSensorDO.getSensorId());
+                projectAddressDTO.setTemperature(temperature);
+                list.add(projectAddressDTO);
+            }
+        }
+
         return new ArrayList<>(map.computeIfAbsent("0", k -> new ArrayList<>()));
     }
 
@@ -178,15 +201,28 @@ public class ProjectService extends ServiceImpl<ProjectDAO, ProjectDO> {
                 addressService.save(addressDO);
                 this.saveItem(projectImportBO.getChild(), projectId, deptId, addressDO.getAddressId());
             } else if (projectImportBO.getFlag() == 3) {
-                DeviceDO deviceDO = new DeviceDO();
-                deviceDO.setAddressId(parentAddressId);
-                deviceDO.setProjectId(projectId);
-                deviceDO.setDeviceName(projectImportBO.getName());
-                deviceDO.setDeviceType(projectImportBO.getType());
-                deviceDO.setDeptId(deptId);
-                deviceDO.setImei(projectImportBO.getImei());
-                deviceDO.setModbus(projectImportBO.getModbus());
-                deviceService.saveDevice(deviceDO);
+
+                if (projectImportBO.getType().equals(DeviceEnum.DEVICE_3001.getDeviceType())) {
+                    DeviceSensorDO deviceSensorDO = new DeviceSensorDO();
+                    deviceSensorDO.setAddressId(parentAddressId);
+                    deviceSensorDO.setProjectId(projectId);
+                    deviceSensorDO.setSensorName(projectImportBO.getName());
+                    deviceSensorDO.setSensorType(projectImportBO.getType());
+                    deviceSensorDO.setDeptId(deptId);
+                    deviceSensorDO.setImei(projectImportBO.getImei());
+                    deviceSensorDO.setModbus(projectImportBO.getModbus());
+                    deviceSensorService.save(deviceSensorDO);
+                } else {
+                    DeviceDO deviceDO = new DeviceDO();
+                    deviceDO.setAddressId(parentAddressId);
+                    deviceDO.setProjectId(projectId);
+                    deviceDO.setDeviceName(projectImportBO.getName());
+                    deviceDO.setDeviceType(projectImportBO.getType());
+                    deviceDO.setDeptId(deptId);
+                    deviceDO.setImei(projectImportBO.getImei());
+                    deviceDO.setModbus(projectImportBO.getModbus());
+                    deviceService.saveDevice(deviceDO);
+                }
             }
         }
     }
@@ -264,5 +300,12 @@ public class ProjectService extends ServiceImpl<ProjectDAO, ProjectDO> {
             }
         }
         return projectBO;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void delete(String id) {
+        deviceSensorService.remove(new LambdaQueryWrapper<DeviceSensorDO>().eq(DeviceSensorDO::getProjectId, id));
+        deviceService.remove(new LambdaQueryWrapper<DeviceDO>().eq(DeviceDO::getProjectId, id));
+        this.removeById(id);
     }
 }
