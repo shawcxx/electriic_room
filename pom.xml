@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.shawcxx</groupId>
     <artifactId>electric_room_server</artifactId>
-    <version>0.0.2</version>
+    <version>0.0.3</version>
     <name>electric_room_server</name>
     <description>配电房系统</description>
     <properties>

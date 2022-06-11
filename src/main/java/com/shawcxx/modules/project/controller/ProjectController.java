@@ -1,11 +1,12 @@
 package com.shawcxx.modules.project.controller;
 
 import cn.dev33.satoken.annotation.SaCheckLogin;
-import cn.dev33.satoken.annotation.SaCheckRole;
 import com.shawcxx.common.base.MyResult;
 import com.shawcxx.modules.project.dto.ProjectAddressDTO;
 import com.shawcxx.modules.project.dto.ProjectListDTO;
+import com.shawcxx.modules.project.form.ProjectForm;
 import com.shawcxx.modules.project.service.ProjectService;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -50,6 +51,13 @@ public class ProjectController {
     @SaCheckLogin
     public MyResult delete(@RequestParam String id) {
         projectService.delete(id);
+        return MyResult.ok();
+    }
+
+    @PostMapping("update")
+    @SaCheckLogin
+    public MyResult update(@RequestBody @Validated ProjectForm form) {
+        projectService.updateProject(form);
         return MyResult.ok();
     }
 }

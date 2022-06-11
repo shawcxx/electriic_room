@@ -26,6 +26,7 @@ import com.shawcxx.modules.project.domain.ProjectDO;
 import com.shawcxx.modules.project.dto.ProjectAddressDTO;
 import com.shawcxx.modules.project.dto.ProjectDTO;
 import com.shawcxx.modules.project.dto.ProjectListDTO;
+import com.shawcxx.modules.project.form.ProjectForm;
 import com.shawcxx.modules.sys.domain.SysDeptDO;
 import com.shawcxx.modules.sys.service.SysDeptService;
 import lombok.extern.slf4j.Slf4j;
@@ -307,5 +308,29 @@ public class ProjectService extends ServiceImpl<ProjectDAO, ProjectDO> {
         deviceSensorService.remove(new LambdaQueryWrapper<DeviceSensorDO>().eq(DeviceSensorDO::getProjectId, id));
         deviceService.remove(new LambdaQueryWrapper<DeviceDO>().eq(DeviceDO::getProjectId, id));
         this.removeById(id);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void updateProject(ProjectForm form) {
+        ProjectDO projectDO = this.getById(form.getProjectId());
+        if (projectDO == null) {
+            return;
+        }
+        if (StrUtil.isNotBlank(form.getProjectName()) && !form.getProjectName().equals(projectDO.getProjectName())) {
+            LambdaQueryWrapper<ProjectDO> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(ProjectDO::getProjectName, form.getProjectName());
+            queryWrapper.eq(ProjectDO::getDeptId, projectDO.getDeptId());
+            ProjectDO one = this.getOne(queryWrapper);
+            if (one != null && !one.getProjectId().equals(projectDO.getProjectId())) {
+                throw new MyException("已存在的项目名");
+            }
+        }
+        projectDO.setProjectName(form.getProjectName());
+        projectDO.setAddress(form.getAddress());
+        projectDO.setLatitude(form.getLatitude());
+        projectDO.setLongitude(form.getLongitude());
+        projectDO.setManager(form.getManager());
+        projectDO.setPhone(form.getPhone());
+        this.updateById(projectDO);
     }
 }
